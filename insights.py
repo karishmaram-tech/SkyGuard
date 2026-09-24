@@ -33,8 +33,10 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-from google import genai
-from google.genai import types as genai_types
+# google-genai is imported lazily inside _get_gemini_client() so that importing
+# this module never fails in environments where the package is not installed
+# (e.g. Streamlit Cloud before requirements are fully resolved, or any context
+# where the AI page is simply not used).
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -115,6 +117,8 @@ def _get_gemini_client():
         If GEMINI_API_KEY is not set — fails loudly rather than silently
         sending an unauthenticated request.
     """
+    from google import genai  # lazy — only needed when AI page is actually used
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise EnvironmentError(
@@ -163,6 +167,8 @@ def generate_route_briefing(
     google.api_core.exceptions.GoogleAPIError
         Propagated as-is if the API call fails (quota, network, etc.).
     """
+    from google.genai import types as genai_types  # lazy — mirrors _get_gemini_client
+
     prompt  = _build_prompt(facts)
     client  = _get_gemini_client()
 
