@@ -18,5 +18,5 @@ xgboost>=2.0.0
 streamlit>=1.35.0
 
 # ── Generative AI (optional — Page 4 only) ───────────────────────────────────
-# Imported lazily; app works without GEMINI_API_KEY set.
-google-genai>=1.0
+# Imported lazily; app works without GROQ_API_KEY set.
+groq>=0.9.0

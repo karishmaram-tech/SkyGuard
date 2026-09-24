@@ -6,14 +6,14 @@ This module exposes a single public function:
     generate_route_briefing(route_facts: RouteFacts) -> str
 
 It builds the exact prompt specified in the SkyGuard brief, sends it to the
-Gemini API (model: gemini-1.5-flash), and returns the three-sentence briefing.
+Groq API (model: llama-3.1-8b-instant), and returns the three-sentence briefing.
 
 SECURITY
-  The Gemini API key is read exclusively from the environment variable
-  GEMINI_API_KEY — it is never hardcoded or logged.
+  The Groq API key is read exclusively from the environment variable
+  GROQ_API_KEY — it is never hardcoded or logged.
 
 DEPENDENCIES
-  pip install google-generativeai
+  pip install groq
 
 USAGE EXAMPLE
   from insights import generate_route_briefing, RouteFacts
@@ -103,31 +103,30 @@ def _build_prompt(facts: RouteFacts) -> str:
 # Gemini client — initialised lazily so import doesn't fail without the key
 # ─────────────────────────────────────────────────────────────────────────────
 
-_GEMINI_MODEL_NAME = "gemini-1.5-flash"   # fast, low-cost; swap for gemini-1.5-pro
-                                           # if richer reasoning is needed
+_GROQ_MODEL_NAME = "llama-3.1-8b-instant"  # fast, free tier; swap for llama-3.3-70b-versatile
+                                            # for higher quality reasoning
 
 
-def _get_gemini_client():
+def _get_groq_client():
     """
-    Build a google.genai Client using the API key from the environment.
+    Build a Groq client using the API key from the environment.
 
     Raises
     ------
     EnvironmentError
-        If GEMINI_API_KEY is not set — fails loudly rather than silently
-        sending an unauthenticated request.
+        If GROQ_API_KEY is not set.
     """
-    from google import genai  # lazy — only needed when AI page is actually used
+    from groq import Groq  # lazy — only needed when AI page is actually used
 
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise EnvironmentError(
-            "GEMINI_API_KEY environment variable is not set.\n"
-            "Set it with:  export GEMINI_API_KEY='your-key-here'  (Linux/Mac)\n"
-            "          or: $env:GEMINI_API_KEY='your-key-here'    (PowerShell)\n"
-            "          or add it to your Colab Secrets panel."
+            "GROQ_API_KEY environment variable is not set.\n"
+            "Get a free key at https://console.groq.com and set it with:\n"
+            "  export GROQ_API_KEY='gsk_...'   (Linux/Mac)\n"
+            "  $env:GROQ_API_KEY='gsk_...'     (PowerShell)"
         )
-    return genai.Client(api_key=api_key)
+    return Groq(api_key=api_key)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -136,7 +135,7 @@ def _get_gemini_client():
 
 def generate_route_briefing(
     facts       : RouteFacts,
-    model_name  : str          = _GEMINI_MODEL_NAME,
+    model_name  : str          = _GROQ_MODEL_NAME,
     temperature : float        = 0.3,    # low temperature → factual, consistent tone
     max_tokens  : Optional[int] = 256,   # three sentences fit well within 256 tokens
 ) -> str:
@@ -148,7 +147,7 @@ def generate_route_briefing(
     facts       : RouteFacts
         The structured facts to embed in the prompt.
     model_name  : str
-        Gemini model to use (default: gemini-1.5-flash).
+        Groq model to use (default: llama-3.1-8b-instant).
     temperature : float
         Controls response creativity. 0.3 keeps the output factual and
         consistent across repeated calls on the same input.
@@ -163,27 +162,19 @@ def generate_route_briefing(
     Raises
     ------
     EnvironmentError
-        If GEMINI_API_KEY is not set.
-    google.api_core.exceptions.GoogleAPIError
+        If GROQ_API_KEY is not set.
+    groq.APIError
         Propagated as-is if the API call fails (quota, network, etc.).
     """
-    from google.genai import types as genai_types  # lazy — mirrors _get_gemini_client
-
-    prompt  = _build_prompt(facts)
-    client  = _get_gemini_client()
-
-    response = client.models.generate_content(
+    prompt   = _build_prompt(facts)
+    client   = _get_groq_client()
+    response = client.chat.completions.create(
         model=model_name,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(
-            temperature       = temperature,
-            max_output_tokens = max_tokens,
-        ),
+        messages=[{"role": "user", "content": prompt}],
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
-
-    # .text raises if the response was blocked by safety filters — the
-    # caller will see a clear exception rather than an empty string.
-    return response.text.strip()
+    return response.choices[0].message.content.strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
