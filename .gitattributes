@@ -1,0 +1,6 @@
+# Force LF line endings for files that break on CRLF when read by Linux servers
+* text=auto
+runtime.txt text eol=lf
+requirements.txt text eol=lf
+*.toml text eol=lf
+*.py text eol=lf
