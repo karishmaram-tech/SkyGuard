@@ -1,0 +1,44 @@
+# SkyGuard — pinned requirements
+# Resolved and verified in this environment (Python 3.12, Windows x64).
+# Install: pip install -r requirements.txt
+#
+# Standard-library modules used across all .py files (no install needed):
+#   os, warnings, dataclasses, typing
+
+# ── Core data ─────────────────────────────────────────────────────────────────
+# Imported by: load_data.py, preprocess.py, feature_engineering.py,
+#              eda.py, model.py, app.py
+# Note: pandas 2.3.3 (not 3.0.5) — streamlit 1.40.2 requires pandas<3.
+pandas==2.3.3
+numpy==2.5.3
+# pyarrow is required by pandas to read/write .parquet files.
+# Streamlit Cloud does not bundle it by default.
+pyarrow>=14.0
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
+# Imported by: eda.py, model.py, app.py
+matplotlib==3.11.2
+
+# ── Machine learning ──────────────────────────────────────────────────────────
+# Imported by: model.py, app.py
+#   sklearn: LogisticRegression, RandomForestClassifier, IsolationForest,
+#            StandardScaler, Pipeline, accuracy_score, precision_score,
+#            recall_score, roc_auc_score, RocCurveDisplay
+scikit-learn==1.9.1
+
+# xgboost: XGBClassifier
+# use_label_encoder was removed in 2.0; app.py is already compatible.
+xgboost==3.4.1
+
+# ── Web application ───────────────────────────────────────────────────────────
+# Imported by: app.py
+# Pinned to 1.40.2 — last version whose starlette bound (<0.42) is compatible
+# with fastapi 0.115.6 (requires starlette>=0.40,<0.42) in this environment.
+streamlit==1.40.2
+
+# ── Generative AI (optional — Page 4 only) ───────────────────────────────────
+# Imported by: insights.py, app.py (lazy import inside generate_route_briefing)
+# google-generativeai is deprecated upstream; replaced by google-genai.
+# app.py and insights.py have been updated to use google.genai accordingly.
+# App degrades gracefully with a warning banner when GEMINI_API_KEY is absent.
+google-genai>=1.0

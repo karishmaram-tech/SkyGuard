@@ -1,0 +1,11 @@
+[server]
+headless = true          # required on Streamlit Cloud (no browser to open)
+enableCORS = false       # Cloud proxy handles CORS
+enableXsrfProtection = true
+
+[theme]
+base = "light"
+primaryColor = "#3b82d4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f7f8fa"
+textColor = "#1f2328"
